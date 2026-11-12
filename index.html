@@ -1,1322 +1,782 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>NovaOS</title>
-  <style>
-    :root {
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --bg-dark: #0f172a;
-      --bg-card: #1e293b;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --danger: #ef4444;
-      --success: #22c55e;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-
-    body {
-      background: #000;
-      color: var(--text);
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      user-select: none;
-    }
-
-    /* ========== SCREENS ========== */
-    .screen {
-      position: fixed;
-      inset: 0;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .screen.active {
-      display: flex;
-    }
-
-    /* ========== SETUP ========== */
-    #setup-screen {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    }
-
-    .setup-card {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 32px;
-      width: min(90vw, 400px);
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .setup-card h1 {
-      font-size: 1.75rem;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .setup-card p {
-      color: var(--text-muted);
-      text-align: center;
-      margin-bottom: 24px;
-      font-size: 0.95rem;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.3);
-      color: var(--text);
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: var(--accent);
-    }
-
-    .style-options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .style-option {
-      border: 2px solid rgba(255,255,255,0.12);
-      border-radius: 12px;
-      padding: 14px 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: rgba(0,0,0,0.2);
-    }
-
-    .style-option:hover {
-      border-color: rgba(255,255,255,0.25);
-    }
-
-    .style-option.selected {
-      border-color: var(--accent);
-      background: rgba(59, 130, 246, 0.15);
-    }
-
-    .style-option .icon {
-      font-size: 1.8rem;
-      margin-bottom: 6px;
-    }
-
-    .style-option .name {
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 20px;
-      border-radius: 10px;
-      border: none;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      width: 100%;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    .error-msg {
-      color: var(--danger);
-      font-size: 0.85rem;
-      margin-top: 10px;
-      text-align: center;
-      min-height: 20px;
-    }
-
-    /* ========== LOCK SCREEN ========== */
-    #lock-screen {
-      background-size: cover;
-      background-position: center;
-      background-color: #0f172a;
-    }
-
-    .lock-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(8px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .lock-time {
-      font-size: clamp(3.5rem, 12vw, 6rem);
-      font-weight: 300;
-      letter-spacing: -2px;
-      line-height: 1;
-    }
-
-    .lock-date {
-      font-size: 1.25rem;
-      color: rgba(255,255,255,0.85);
-      margin-top: 8px;
-      margin-bottom: 40px;
-    }
-
-    .lock-form {
-      background: rgba(30, 41, 59, 0.75);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      padding: 28px;
-      width: min(90vw, 340px);
-      border: 1px solid rgba(255,255,255,0.1);
-      text-align: center;
-    }
-
-    .lock-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin: 0 auto 14px;
-      color: white;
-    }
-
-    .lock-username {
-      font-size: 1.15rem;
-      margin-bottom: 18px;
-      font-weight: 500;
-    }
-
-    .lock-form input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(0,0,0,0.35);
-      color: white;
-      font-size: 1rem;
-      outline: none;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .lock-form input:focus {
-      border-color: var(--accent);
-    }
-
-    /* ========== DESKTOP ========== */
-    #desktop-screen {
-      background-size: cover;
-      background-position: center;
-      background-color: #0f172a;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: stretch;
-    }
-
-    .desktop-area {
-      flex: 1;
-      position: relative;
-      padding: 20px;
-      overflow: hidden;
-    }
-
-    .desktop-icons {
-      display: flex;
-      flex-direction: column;
-      flex-wrap: wrap;
-      gap: 8px;
-      height: 100%;
-      align-content: flex-start;
-    }
-
-    .desk-icon {
-      width: 90px;
-      text-align: center;
-      cursor: pointer;
-      padding: 10px 6px;
-      border-radius: 8px;
-      transition: background 0.15s;
-    }
-
-    .desk-icon:hover {
-      background: rgba(255,255,255,0.12);
-    }
-
-    .desk-icon .icon-img {
-      font-size: 2.4rem;
-      margin-bottom: 4px;
-    }
-
-    .desk-icon .icon-label {
-      font-size: 0.78rem;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-      word-break: break-word;
-    }
-
-    /* Taskbar */
-    .taskbar {
-      height: 48px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      border-top: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      gap: 8px;
-      z-index: 100;
-    }
-
-    .start-btn {
-      width: 42px;
-      height: 36px;
-      border-radius: 8px;
-      border: none;
-      background: transparent;
-      color: white;
-      font-size: 1.3rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s;
-    }
-
-    .start-btn:hover {
-      background: rgba(255,255,255,0.12);
-    }
-
-    .taskbar-clock {
-      margin-left: auto;
-      font-size: 0.85rem;
-      text-align: right;
-      line-height: 1.25;
-      padding-right: 6px;
-      color: rgba(255,255,255,0.9);
-    }
-
-    /* Start Menu */
-    .start-menu {
-      position: absolute;
-      bottom: 56px;
-      left: 10px;
-      width: min(320px, 90vw);
-      max-height: 70vh;
-      background: rgba(30, 41, 59, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 200;
-    }
-
-    .start-menu.open {
-      display: flex;
-    }
-
-    .start-menu-header {
-      padding: 16px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .start-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
-
-    .start-user-info {
-      flex: 1;
-    }
-
-    .start-user-info .name {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .start-user-info .style-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .start-apps {
-      padding: 10px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .app-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .app-item:hover {
-      background: rgba(255,255,255,0.1);
-    }
-
-    .app-item .app-icon {
-      font-size: 1.35rem;
-      width: 28px;
-      text-align: center;
-    }
-
-    .app-item .app-name {
-      font-size: 0.95rem;
-    }
-
-    .start-footer {
-      padding: 10px;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      gap: 8px;
-    }
-
-    .start-footer .btn {
-      flex: 1;
-      padding: 10px;
-      font-size: 0.85rem;
-    }
-
-    /* Linux style */
-    body.linux-style .taskbar {
-      background: rgba(20, 20, 30, 0.92);
-    }
-
-    body.linux-style .start-btn {
-      background: #e11d48;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      font-size: 1rem;
-    }
-
-    body.linux-style .start-btn:hover {
-      background: #be123c;
-    }
-
-    body.linux-style .start-menu {
-      left: 8px;
-      bottom: 56px;
-      border-radius: 12px;
-    }
-
-    /* Windows / Apps */
-    .window {
-      position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(480px, 92vw);
-      max-height: 75vh;
-      background: var(--bg-card);
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 25px 50px rgba(0,0,0,0.45);
-      display: none;
-      flex-direction: column;
-      z-index: 150;
-      overflow: hidden;
-    }
-
-    .window.open {
-      display: flex;
-    }
-
-    .window-header {
-      padding: 12px 16px;
-      background: rgba(0,0,0,0.25);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .window-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .window-controls {
-      display: flex;
-      gap: 8px;
-    }
-
-    .win-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      border: none;
-      background: rgba(255,255,255,0.08);
-      color: white;
-      cursor: pointer;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .win-btn:hover {
-      background: rgba(255,255,255,0.15);
-    }
-
-    .win-btn.close:hover {
-      background: var(--danger);
-    }
-
-    .window-body {
-      padding: 20px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    /* Settings */
-    .settings-section {
-      margin-bottom: 24px;
-    }
-
-    .settings-section h3 {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .wallpaper-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .wallpaper-option {
-      aspect-ratio: 16/10;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      background-size: cover;
-      background-position: center;
-      transition: border-color 0.15s;
-    }
-
-    .wallpaper-option:hover,
-    .wallpaper-option.active {
-      border-color: var(--accent);
-    }
-
-    .theme-colors {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .color-swatch {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 3px solid transparent;
-      transition: border-color 0.15s;
-    }
-
-    .color-swatch.active {
-      border-color: white;
-    }
-
-    /* Panic (Fake Google) */
-    #panic-screen {
-      background: #fff;
-      color: #202124;
-      z-index: 9999;
-    }
-
-    .google-logo {
-      font-size: 5.5rem;
-      font-weight: 400;
-      letter-spacing: -4px;
-      margin-bottom: 28px;
-    }
-
-    .google-logo span:nth-child(1) { color: #4285F4; }
-    .google-logo span:nth-child(2) { color: #EA4335; }
-    .google-logo span:nth-child(3) { color: #FBBC05; }
-    .google-logo span:nth-child(4) { color: #4285F4; }
-    .google-logo span:nth-child(5) { color: #34A853; }
-    .google-logo span:nth-child(6) { color: #EA4335; }
-
-    .google-search {
-      width: min(90vw, 560px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .google-input-wrap {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      border: 1px solid #dfe1e5;
-      border-radius: 24px;
-      padding: 12px 20px;
-      box-shadow: 0 1px 6px rgba(32,33,36,0.08);
-      margin-bottom: 24px;
-    }
-
-    .google-input-wrap:hover,
-    .google-input-wrap:focus-within {
-      box-shadow: 0 1px 8px rgba(32,33,36,0.18);
-    }
-
-    .google-input-wrap input {
-      flex: 1;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      background: transparent;
-      color: #202124;
-    }
-
-    .google-btns {
-      display: flex;
-      gap: 12px;
-    }
-
-    .google-btn {
-      background: #f8f9fa;
-      border: 1px solid #f8f9fa;
-      border-radius: 4px;
-      color: #3c4043;
-      font-size: 0.9rem;
-      padding: 10px 18px;
-      cursor: pointer;
-    }
-
-    .google-btn:hover {
-      border-color: #dadce0;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
-    }
-
-    .panic-hint {
-      position: absolute;
-      bottom: 20px;
-      font-size: 0.75rem;
-      color: #70757a;
-    }
-
-    /* Mobile panic button */
-    #mobile-panic-btn {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: white;
-      font-size: 1rem;
-      z-index: 500;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    @media (max-width: 768px) {
-      #mobile-panic-btn {
-        display: flex;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>NovaOS</title>
+<style>
+:root {
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --danger: #ef4444;
+  --success: #22c55e;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background:#000; color:var(--text); height:100vh; width:100vw; overflow:hidden; user-select:none; }
+.screen { position:fixed; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+.screen.active { display:flex; }
+
+/* BOOT */
+#boot-screen { background:#000; z-index:99999; }
+.boot-logo { font-size:3.5rem; font-weight:700; letter-spacing:-1px; margin-bottom:30px; opacity:0; animation:fadeIn 1s ease forwards; }
+.boot-bar { width:220px; height:4px; background:#1e293b; border-radius:4px; overflow:hidden; }
+.boot-progress { height:100%; width:0; background:var(--accent); animation:load 2.2s ease forwards; }
+@keyframes fadeIn { to { opacity:1; } }
+@keyframes load { to { width:100%; } }
+
+/* SETUP */
+#setup-screen { background:linear-gradient(135deg,#0f172a,#1e293b,#0f172a); }
+.setup-card { background:var(--card); border-radius:16px; padding:32px; width:min(90vw,400px); border:1px solid rgba(255,255,255,0.08); box-shadow:0 25px 50px rgba(0,0,0,0.5); }
+.setup-card h1 { text-align:center; margin-bottom:6px; font-size:1.7rem; }
+.setup-card p { text-align:center; color:var(--muted); margin-bottom:22px; font-size:0.95rem; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:0.82rem; color:var(--muted); margin-bottom:5px; }
+.form-group input { width:100%; padding:11px 13px; border-radius:9px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.3); color:white; font-size:1rem; outline:none; }
+.form-group input:focus { border-color:var(--accent); }
+.style-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+.style-option { border:2px solid rgba(255,255,255,0.12); border-radius:11px; padding:13px 8px; text-align:center; cursor:pointer; background:rgba(0,0,0,0.2); transition:0.15s; }
+.style-option.selected { border-color:var(--accent); background:rgba(59,130,246,0.15); }
+.style-option .icon { font-size:1.7rem; margin-bottom:4px; }
+.style-option .name { font-size:0.88rem; font-weight:600; }
+.btn { width:100%; padding:12px; border-radius:9px; border:none; font-size:1rem; font-weight:600; cursor:pointer; }
+.btn-primary { background:var(--accent); color:white; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn-danger { background:var(--danger); color:white; }
+.error-msg { color:var(--danger); font-size:0.83rem; text-align:center; min-height:18px; margin-top:8px; }
+
+/* LOCK */
+#lock-screen { background-size:cover; background-position:center; }
+.lock-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.lock-time { font-size:clamp(3.8rem,13vw,6.5rem); font-weight:200; letter-spacing:-3px; }
+.lock-date { font-size:1.2rem; color:rgba(255,255,255,0.85); margin:6px 0 36px; }
+.lock-form { background:rgba(30,41,59,0.8); backdrop-filter:blur(14px); border-radius:16px; padding:26px; width:min(90vw,330px); border:1px solid rgba(255,255,255,0.1); text-align:center; }
+.lock-avatar { width:70px; height:70px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1.7rem; font-weight:700; margin:0 auto 12px; color:white; }
+.lock-username { font-size:1.1rem; margin-bottom:16px; }
+.lock-form input { width:100%; padding:11px; border-radius:9px; border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.35); color:white; text-align:center; margin-bottom:11px; outline:none; }
+.lock-form input:focus { border-color:var(--accent); }
+
+/* DESKTOP */
+#desktop-screen { background-size:cover; background-position:center; flex-direction:column; justify-content:flex-start; align-items:stretch; }
+.desktop-area { flex:1; position:relative; padding:18px; overflow:hidden; }
+.desktop-icons { display:flex; flex-direction:column; flex-wrap:wrap; gap:6px; height:100%; align-content:flex-start; }
+.desk-icon { width:88px; text-align:center; cursor:pointer; padding:9px 5px; border-radius:8px; }
+.desk-icon:hover { background:rgba(255,255,255,0.12); }
+.desk-icon .icon-img { font-size:2.3rem; margin-bottom:3px; }
+.desk-icon .icon-label { font-size:0.75rem; text-shadow:0 1px 3px rgba(0,0,0,0.9); }
+
+/* TASKBAR */
+.taskbar { height:46px; background:rgba(15,23,42,0.88); backdrop-filter:blur(18px); border-top:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; padding:0 10px; gap:6px; z-index:100; }
+.start-btn { width:40px; height:34px; border-radius:8px; border:none; background:transparent; color:white; font-size:1.25rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.start-btn:hover { background:rgba(255,255,255,0.12); }
+.taskbar-clock { margin-left:auto; font-size:0.82rem; text-align:right; line-height:1.25; padding-right:4px; }
+
+/* START MENU */
+.start-menu { position:absolute; bottom:54px; left:8px; width:min(310px,92vw); max-height:72vh; background:rgba(30,41,59,0.96); backdrop-filter:blur(22px); border-radius:14px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 20px 45px rgba(0,0,0,0.45); display:none; flex-direction:column; overflow:hidden; z-index:200; }
+.start-menu.open { display:flex; }
+.start-menu-header { padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:11px; }
+.start-avatar { width:38px; height:38px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; }
+.start-user-info .name { font-weight:600; font-size:0.92rem; }
+.start-user-info .style-label { font-size:0.72rem; color:var(--muted); }
+.start-apps { padding:8px; overflow-y:auto; flex:1; }
+.app-item { display:flex; align-items:center; gap:11px; padding:10px 11px; border-radius:9px; cursor:pointer; }
+.app-item:hover { background:rgba(255,255,255,0.1); }
+.app-item .app-icon { font-size:1.3rem; width:26px; text-align:center; }
+.start-footer { padding:9px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:7px; }
+.start-footer .btn { flex:1; padding:9px; font-size:0.83rem; }
+
+/* LINUX STYLE */
+body.linux-style .start-btn { background:#e11d48; border-radius:50%; width:34px; height:34px; font-size:0.95rem; }
+body.linux-style .start-btn:hover { background:#be123c; }
+body.linux-style .taskbar { background:rgba(18,18,28,0.94); }
+
+/* WINDOWS */
+.window { position:absolute; top:50px; left:50%; transform:translateX(-50%); width:min(520px,94vw); max-height:78vh; background:var(--card); border-radius:12px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 25px 50px rgba(0,0,0,0.5); display:none; flex-direction:column; z-index:150; overflow:hidden; }
+.window.open { display:flex; }
+.window-header { padding:11px 14px; background:rgba(0,0,0,0.28); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.06); }
+.window-title { font-weight:600; font-size:0.92rem; }
+.win-btn { width:26px; height:26px; border-radius:6px; border:none; background:rgba(255,255,255,0.08); color:white; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; }
+.win-btn:hover { background:rgba(255,255,255,0.16); }
+.win-btn.close:hover { background:var(--danger); }
+.window-body { padding:16px; overflow-y:auto; flex:1; }
+
+/* Settings */
+.settings-section { margin-bottom:20px; }
+.settings-section h3 { font-size:0.82rem; color:var(--muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.4px; }
+.wallpaper-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.wallpaper-option { aspect-ratio:16/10; border-radius:7px; cursor:pointer; border:2px solid transparent; }
+.wallpaper-option.active, .wallpaper-option:hover { border-color:var(--accent); }
+.theme-colors { display:flex; gap:8px; flex-wrap:wrap; }
+.color-swatch { width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid transparent; }
+.color-swatch.active { border-color:white; }
+
+/* Terminal */
+.terminal-body { background:#0a0a0f; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:0.88rem; padding:12px; height:320px; overflow-y:auto; color:#e2e8f0; }
+.terminal-body .prompt { color:#22c55e; }
+.terminal-input-line { display:flex; gap:6px; margin-top:4px; }
+.terminal-input-line input { flex:1; background:transparent; border:none; outline:none; color:#e2e8f0; font-family:inherit; font-size:inherit; }
+
+/* Files */
+.file-list { display:flex; flex-direction:column; gap:4px; }
+.file-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; }
+.file-item:hover { background:rgba(255,255,255,0.08); }
+.file-actions { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.file-actions input { flex:1; min-width:120px; padding:8px 10px; border-radius:7px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.3); color:white; outline:none; }
+
+/* Calculator */
+.calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.calc-display { grid-column:1 / -1; background:rgba(0,0,0,0.35); padding:14px; border-radius:9px; text-align:right; font-size:1.6rem; margin-bottom:4px; min-height:52px; word-break:break-all; }
+.calc-btn { padding:14px; border-radius:9px; border:none; background:rgba(255,255,255,0.08); color:white; font-size:1.15rem; cursor:pointer; }
+.calc-btn:hover { background:rgba(255,255,255,0.15); }
+.calc-btn.op { background:rgba(59,130,246,0.25); }
+.calc-btn.eq { background:var(--accent); }
+
+/* Panic */
+#panic-screen { background:#fff; color:#202124; z-index:9999; }
+.google-logo { font-size:5.2rem; font-weight:400; letter-spacing:-3px; margin-bottom:26px; }
+.google-logo span:nth-child(1){color:#4285F4} .google-logo span:nth-child(2){color:#EA4335} .google-logo span:nth-child(3){color:#FBBC05}
+.google-logo span:nth-child(4){color:#4285F4} .google-logo span:nth-child(5){color:#34A853} .google-logo span:nth-child(6){color:#EA4335}
+.google-search { width:min(90vw,540px); display:flex; flex-direction:column; align-items:center; }
+.google-input-wrap { width:100%; display:flex; align-items:center; border:1px solid #dfe1e5; border-radius:24px; padding:11px 18px; box-shadow:0 1px 6px rgba(32,33,36,0.08); margin-bottom:22px; }
+.google-input-wrap input { flex:1; border:none; outline:none; font-size:1rem; background:transparent; color:#202124; }
+.google-btns { display:flex; gap:11px; }
+.google-btn { background:#f8f9fa; border:1px solid #f8f9fa; border-radius:4px; color:#3c4043; font-size:0.88rem; padding:9px 16px; cursor:pointer; }
+.panic-hint { position:absolute; bottom:18px; font-size:0.72rem; color:#70757a; }
+
+#mobile-panic-btn { position:fixed; top:10px; left:10px; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:white; font-size:0.95rem; z-index:500; display:none; align-items:center; justify-content:center; cursor:pointer; }
+@media (max-width:768px){ #mobile-panic-btn{display:flex;} }
+</style>
 </head>
 <body>
-  <!-- SETUP SCREEN -->
-  <div id="setup-screen" class="screen">
-    <div class="setup-card">
-      <h1>Welcome to NovaOS</h1>
-      <p>Create your account to get started</p>
 
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="setup-username" placeholder="Choose a username" maxlength="20" autocomplete="off" />
+<!-- BOOT -->
+<div id="boot-screen" class="screen active">
+  <div class="boot-logo">NovaOS</div>
+  <div class="boot-bar"><div class="boot-progress"></div></div>
+</div>
+
+<!-- SETUP -->
+<div id="setup-screen" class="screen">
+  <div class="setup-card">
+    <h1>Welcome to NovaOS</h1>
+    <p>Create your account</p>
+    <div class="form-group"><label>Username</label><input type="text" id="setup-username" maxlength="20" autocomplete="off" /></div>
+    <div class="form-group"><label>Password</label><input type="password" id="setup-password" maxlength="32" /></div>
+    <div class="form-group"><label>Confirm Password</label><input type="password" id="setup-password2" maxlength="32" /></div>
+    <div class="form-group">
+      <label>Desktop Style</label>
+      <div class="style-options">
+        <div class="style-option selected" data-style="windows" onclick="selectStyle(this)"><div class="icon">🪟</div><div class="name">Windows</div></div>
+        <div class="style-option" data-style="linux" onclick="selectStyle(this)"><div class="icon">🐧</div><div class="name">Linux</div></div>
       </div>
+    </div>
+    <button class="btn btn-primary" onclick="createAccount()">Create Account</button>
+    <div class="error-msg" id="setup-error"></div>
+  </div>
+</div>
 
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="setup-password" placeholder="Create a password" maxlength="32" />
-      </div>
-
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" id="setup-password2" placeholder="Confirm password" maxlength="32" />
-      </div>
-
-      <div class="form-group">
-        <label>Desktop Style</label>
-        <div class="style-options">
-          <div class="style-option selected" data-style="windows" onclick="selectStyle(this)">
-            <div class="icon">🪟</div>
-            <div class="name">Windows</div>
-          </div>
-          <div class="style-option" data-style="linux" onclick="selectStyle(this)">
-            <div class="icon">🐧</div>
-            <div class="name">Linux</div>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn btn-primary" onclick="createAccount()">Create Account</button>
-      <div class="error-msg" id="setup-error"></div>
+<!-- LOCK -->
+<div id="lock-screen" class="screen">
+  <div class="lock-overlay">
+    <div class="lock-time" id="lock-time">12:00</div>
+    <div class="lock-date" id="lock-date">Thursday, November 12</div>
+    <div class="lock-form">
+      <div class="lock-avatar" id="lock-avatar">N</div>
+      <div class="lock-username" id="lock-username">User</div>
+      <input type="password" id="lock-password" placeholder="Enter password" autocomplete="off" />
+      <button class="btn btn-primary" onclick="attemptUnlock()">Unlock</button>
+      <div class="error-msg" id="lock-error"></div>
     </div>
   </div>
+</div>
 
-  <!-- LOCK SCREEN -->
-  <div id="lock-screen" class="screen">
-    <div class="lock-overlay">
-      <div class="lock-time" id="lock-time">12:00</div>
-      <div class="lock-date" id="lock-date">Thursday, November 12</div>
+<!-- DESKTOP -->
+<div id="desktop-screen" class="screen">
+  <div class="desktop-area">
+    <div class="desktop-icons">
+      <div class="desk-icon" onclick="openApp('settings')"><div class="icon-img">⚙️</div><div class="icon-label">Settings</div></div>
+      <div class="desk-icon" onclick="openApp('files')"><div class="icon-img">📁</div><div class="icon-label">Files</div></div>
+      <div class="desk-icon" onclick="openApp('terminal')"><div class="icon-img">💻</div><div class="icon-label">Terminal</div></div>
+      <div class="desk-icon" onclick="openApp('notes')"><div class="icon-img">📝</div><div class="icon-label">Notes</div></div>
+      <div class="desk-icon" onclick="openApp('calc')"><div class="icon-img">🧮</div><div class="icon-label">Calculator</div></div>
+    </div>
 
-      <div class="lock-form">
-        <div class="lock-avatar" id="lock-avatar">N</div>
-        <div class="lock-username" id="lock-username">User</div>
-        <input type="password" id="lock-password" placeholder="Enter password" autocomplete="off" />
-        <button class="btn btn-primary" onclick="attemptUnlock()">Unlock</button>
-        <div class="error-msg" id="lock-error"></div>
+    <!-- START MENU -->
+    <div class="start-menu" id="start-menu">
+      <div class="start-menu-header">
+        <div class="start-avatar" id="start-avatar">N</div>
+        <div class="start-user-info">
+          <div class="name" id="start-username">User</div>
+          <div class="style-label" id="start-style-label">Windows style</div>
+        </div>
+      </div>
+      <div class="start-apps">
+        <div class="app-item" onclick="openApp('settings');closeStartMenu();"><div class="app-icon">⚙️</div><div class="app-name">Settings</div></div>
+        <div class="app-item" onclick="openApp('files');closeStartMenu();"><div class="app-icon">📁</div><div class="app-name">Files</div></div>
+        <div class="app-item" onclick="openApp('terminal');closeStartMenu();"><div class="app-icon">💻</div><div class="app-name">Terminal</div></div>
+        <div class="app-item" onclick="openApp('notes');closeStartMenu();"><div class="app-icon">📝</div><div class="app-name">Notes</div></div>
+        <div class="app-item" onclick="openApp('calc');closeStartMenu();"><div class="app-icon">🧮</div><div class="app-name">Calculator</div></div>
+        <div class="app-item" onclick="openApp('about');closeStartMenu();"><div class="app-icon">ℹ️</div><div class="app-name">About</div></div>
+      </div>
+      <div class="start-footer">
+        <button class="btn btn-danger" onclick="lockNow()">Lock</button>
+        <button class="btn" style="background:rgba(255,255,255,0.1);color:white" onclick="shutdown()">Shut Down</button>
       </div>
     </div>
-  </div>
 
-  <!-- DESKTOP -->
-  <div id="desktop-screen" class="screen">
-    <div class="desktop-area" id="desktop-area">
-      <div class="desktop-icons" id="desktop-icons">
-        <div class="desk-icon" onclick="openApp('settings')">
-          <div class="icon-img">⚙️</div>
-          <div class="icon-label">Settings</div>
-        </div>
-        <div class="desk-icon" onclick="openApp('files')">
-          <div class="icon-img">📁</div>
-          <div class="icon-label">Files</div>
-        </div>
-        <div class="desk-icon" onclick="openApp('terminal')">
-          <div class="icon-img">💻</div>
-          <div class="icon-label">Terminal</div>
-        </div>
-        <div class="desk-icon" onclick="openApp('notes')">
-          <div class="icon-img">📝</div>
-          <div class="icon-label">Notes</div>
-        </div>
-      </div>
-
-      <!-- Start Menu -->
-      <div class="start-menu" id="start-menu">
-        <div class="start-menu-header">
-          <div class="start-avatar" id="start-avatar">N</div>
-          <div class="start-user-info">
-            <div class="name" id="start-username">User</div>
-            <div class="style-label" id="start-style-label">Windows style</div>
+    <!-- SETTINGS -->
+    <div class="window" id="window-settings">
+      <div class="window-header"><div class="window-title">Settings</div><div class="window-controls"><button class="win-btn close" onclick="closeApp('settings')">✕</button></div></div>
+      <div class="window-body">
+        <div class="settings-section"><h3>Wallpaper</h3><div class="wallpaper-grid" id="wallpaper-grid"></div></div>
+        <div class="settings-section"><h3>Accent Color</h3><div class="theme-colors" id="theme-colors"></div></div>
+        <div class="settings-section">
+          <h3>Desktop Style</h3>
+          <div class="style-options" style="margin-bottom:0">
+            <div class="style-option" id="style-win" data-style="windows" onclick="changeStyle('windows')"><div class="icon">🪟</div><div class="name">Windows</div></div>
+            <div class="style-option" id="style-lin" data-style="linux" onclick="changeStyle('linux')"><div class="icon">🐧</div><div class="name">Linux</div></div>
           </div>
         </div>
-        <div class="start-apps">
-          <div class="app-item" onclick="openApp('settings'); closeStartMenu();">
-            <div class="app-icon">⚙️</div>
-            <div class="app-name">Settings</div>
-          </div>
-          <div class="app-item" onclick="openApp('files'); closeStartMenu();">
-            <div class="app-icon">📁</div>
-            <div class="app-name">Files</div>
-          </div>
-          <div class="app-item" onclick="openApp('terminal'); closeStartMenu();">
-            <div class="app-icon">💻</div>
-            <div class="app-name">Terminal</div>
-          </div>
-          <div class="app-item" onclick="openApp('notes'); closeStartMenu();">
-            <div class="app-icon">📝</div>
-            <div class="app-name">Notes</div>
-          </div>
-          <div class="app-item" onclick="openApp('about'); closeStartMenu();">
-            <div class="app-icon">ℹ️</div>
-            <div class="app-name">About NovaOS</div>
-          </div>
-        </div>
-        <div class="start-footer">
-          <button class="btn btn-danger" onclick="lockNow()">Lock</button>
-          <button class="btn" style="background:rgba(255,255,255,0.1);color:white;" onclick="shutdown()">Shut Down</button>
-        </div>
-      </div>
-
-      <!-- Settings Window -->
-      <div class="window" id="window-settings">
-        <div class="window-header">
-          <div class="window-title">Settings</div>
-          <div class="window-controls">
-            <button class="win-btn close" onclick="closeApp('settings')">✕</button>
-          </div>
-        </div>
-        <div class="window-body">
-          <div class="settings-section">
-            <h3>Wallpaper</h3>
-            <div class="wallpaper-grid" id="wallpaper-grid"></div>
-          </div>
-
-          <div class="settings-section">
-            <h3>Accent Color</h3>
-            <div class="theme-colors" id="theme-colors"></div>
-          </div>
-
-          <div class="settings-section">
-            <h3>Change Password</h3>
-            <div class="form-group">
-              <label>Current Password</label>
-              <input type="password" id="change-current" placeholder="Current password" />
-            </div>
-            <div class="form-group">
-              <label>New Password</label>
-              <input type="password" id="change-new" placeholder="New password" />
-            </div>
-            <div class="form-group">
-              <label>Confirm New Password</label>
-              <input type="password" id="change-confirm" placeholder="Confirm new password" />
-            </div>
-            <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
-            <div class="error-msg" id="change-error"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Files Window -->
-      <div class="window" id="window-files">
-        <div class="window-header">
-          <div class="window-title">Files</div>
-          <div class="window-controls">
-            <button class="win-btn close" onclick="closeApp('files')">✕</button>
-          </div>
-        </div>
-        <div class="window-body">
-          <p style="color:var(--text-muted);">File manager coming in a later update.</p>
-          <p style="margin-top:12px;">This will let you create folders, save notes, and organize stuff.</p>
-        </div>
-      </div>
-
-      <!-- Terminal Window -->
-      <div class="window" id="window-terminal">
-        <div class="window-header">
-          <div class="window-title">Terminal</div>
-          <div class="window-controls">
-            <button class="win-btn close" onclick="closeApp('terminal')">✕</button>
-          </div>
-        </div>
-        <div class="window-body" style="font-family: monospace; background:#0a0a0f;">
-          <p style="color:#22c55e;">NovaOS Terminal v0.1</p>
-          <p style="color:var(--text-muted); margin-top:8px;">Type commands here in a future update.</p>
-          <p style="margin-top:16px; color:#94a3b8;">Available soon: help, clear, neofetch, ls, date...</p>
-        </div>
-      </div>
-
-      <!-- Notes Window -->
-      <div class="window" id="window-notes">
-        <div class="window-header">
-          <div class="window-title">Notes</div>
-          <div class="window-controls">
-            <button class="win-btn close" onclick="closeApp('notes')">✕</button>
-          </div>
-        </div>
-        <div class="window-body">
-          <textarea id="notes-area" style="width:100%;height:200px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;padding:12px;resize:vertical;font-size:0.95rem;" placeholder="Write something..."></textarea>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="saveNotes()">Save Notes</button>
-        </div>
-      </div>
-
-      <!-- About Window -->
-      <div class="window" id="window-about">
-        <div class="window-header">
-          <div class="window-title">About NovaOS</div>
-          <div class="window-controls">
-            <button class="win-btn close" onclick="closeApp('about')">✕</button>
-          </div>
-        </div>
-        <div class="window-body">
-          <h2 style="margin-bottom:8px;">NovaOS</h2>
-          <p style="color:var(--text-muted); margin-bottom:16px;">A browser-based operating system simulation.</p>
-          <p><strong>Version:</strong> 0.1 (Phase 1)</p>
-          <p style="margin-top:8px;"><strong>Features:</strong></p>
-          <ul style="margin:8px 0 0 18px; color:var(--text-muted); line-height:1.6;">
-            <li>Account system + lock screen</li>
-            <li>Windows & Linux styles</li>
-            <li>Custom wallpapers & accent colors</li>
-            <li>Panic key (press ` )</li>
-            <li>Auto-lock on leave</li>
-          </ul>
+        <div class="settings-section">
+          <h3>Change Password</h3>
+          <div class="form-group"><label>Current</label><input type="password" id="change-current" /></div>
+          <div class="form-group"><label>New</label><input type="password" id="change-new" /></div>
+          <div class="form-group"><label>Confirm</label><input type="password" id="change-confirm" /></div>
+          <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+          <div class="error-msg" id="change-error"></div>
         </div>
       </div>
     </div>
 
-    <!-- Taskbar -->
-    <div class="taskbar">
-      <button class="start-btn" id="start-btn" onclick="toggleStartMenu()" title="Start">⊞</button>
-      <div class="taskbar-clock">
-        <div id="taskbar-time">12:00 PM</div>
-        <div id="taskbar-date" style="font-size:0.75rem; opacity:0.8;">Thu 11/12</div>
+    <!-- FILES -->
+    <div class="window" id="window-files">
+      <div class="window-header"><div class="window-title">Files</div><div class="window-controls"><button class="win-btn close" onclick="closeApp('files')">✕</button></div></div>
+      <div class="window-body">
+        <div class="file-actions">
+          <input type="text" id="new-file-name" placeholder="New file or folder name" />
+          <button class="btn btn-primary" style="width:auto;padding:8px 14px" onclick="createFile(false)">+ File</button>
+          <button class="btn" style="width:auto;padding:8px 14px;background:rgba(255,255,255,0.1);color:white" onclick="createFile(true)">+ Folder</button>
+        </div>
+        <div class="file-list" id="file-list"></div>
+      </div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="window" id="window-terminal">
+      <div class="window-header"><div class="window-title">Terminal</div><div class="window-controls"><button class="win-btn close" onclick="closeApp('terminal')">✕</button></div></div>
+      <div class="window-body" style="padding:0">
+        <div class="terminal-body" id="terminal-body">
+          <div>NovaOS Terminal v0.2</div>
+          <div style="color:#94a3b8;margin-bottom:8px">Type <span style="color:#22c55e">help</span> for commands</div>
+        </div>
+        <div class="terminal-input-line" style="padding:8px 12px;background:#0a0a0f;border-top:1px solid #1e293b">
+          <span class="prompt">user@novaos:~$</span>
+          <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="window" id="window-notes">
+      <div class="window-header"><div class="window-title">Notes</div><div class="window-controls"><button class="win-btn close" onclick="closeApp('notes')">✕</button></div></div>
+      <div class="window-body">
+        <textarea id="notes-area" style="width:100%;height:260px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;padding:12px;resize:vertical;font-size:0.95rem;" placeholder="Write anything..."></textarea>
+        <div style="margin-top:8px;font-size:0.8rem;color:var(--muted)">Auto-saves as you type</div>
+      </div>
+    </div>
+
+    <!-- CALCULATOR -->
+    <div class="window" id="window-calc">
+      <div class="window-header"><div class="window-title">Calculator</div><div class="window-controls"><button class="win-btn close" onclick="closeApp('calc')">✕</button></div></div>
+      <div class="window-body">
+        <div class="calc-grid">
+          <div class="calc-display" id="calc-display">0</div>
+          <button class="calc-btn" onclick="calcClear()">C</button>
+          <button class="calc-btn" onclick="calcInput('(')">(</button>
+          <button class="calc-btn" onclick="calcInput(')')">)</button>
+          <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+          <button class="calc-btn" onclick="calcInput('7')">7</button>
+          <button class="calc-btn" onclick="calcInput('8')">8</button>
+          <button class="calc-btn" onclick="calcInput('9')">9</button>
+          <button class="calc-btn op" onclick="calcInput('*')">×</button>
+          <button class="calc-btn" onclick="calcInput('4')">4</button>
+          <button class="calc-btn" onclick="calcInput('5')">5</button>
+          <button class="calc-btn" onclick="calcInput('6')">6</button>
+          <button class="calc-btn op" onclick="calcInput('-')">−</button>
+          <button class="calc-btn" onclick="calcInput('1')">1</button>
+          <button class="calc-btn" onclick="calcInput('2')">2</button>
+          <button class="calc-btn" onclick="calcInput('3')">3</button>
+          <button class="calc-btn op" onclick="calcInput('+')">+</button>
+          <button class="calc-btn" onclick="calcInput('0')">0</button>
+          <button class="calc-btn" onclick="calcInput('.')">.</button>
+          <button class="calc-btn eq" onclick="calcEquals()" style="grid-column:span 2">=</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="window" id="window-about">
+      <div class="window-header"><div class="window-title">About NovaOS</div><div class="window-controls"><button class="win-btn close" onclick="closeApp('about')">✕</button></div></div>
+      <div class="window-body">
+        <h2 style="margin-bottom:6px">NovaOS</h2>
+        <p style="color:var(--muted);margin-bottom:14px">A browser-based operating system</p>
+        <p><strong>Version</strong> 0.2</p>
+        <p style="margin-top:10px"><strong>Features</strong></p>
+        <ul style="margin:6px 0 0 18px;color:var(--muted);line-height:1.55">
+          <li>Windows & Linux styles</li>
+          <li>Lock screen + auto-lock</li>
+          <li>Working Terminal</li>
+          <li>File Manager</li>
+          <li>Calculator + Notes</li>
+          <li>Panic key (`)</li>
+          <li>Custom wallpapers & colors</li>
+        </ul>
       </div>
     </div>
   </div>
 
-  <!-- PANIC SCREEN (Fake Google) -->
-  <div id="panic-screen" class="screen">
-    <div class="google-logo">
-      <span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span>
+  <div class="taskbar">
+    <button class="start-btn" id="start-btn" onclick="toggleStartMenu()">⊞</button>
+    <div class="taskbar-clock">
+      <div id="taskbar-time">12:00 PM</div>
+      <div id="taskbar-date" style="font-size:0.72rem;opacity:0.8">Thu 11/12</div>
     </div>
-    <div class="google-search">
-      <div class="google-input-wrap">
-        <input type="text" placeholder="Search Google or type a URL" />
-      </div>
-      <div class="google-btns">
-        <button class="google-btn">Google Search</button>
-        <button class="google-btn">I'm Feeling Lucky</button>
-      </div>
-    </div>
-    <div class="panic-hint">Press ` again to return • or tap the top-left button on phone</div>
   </div>
+</div>
 
-  <!-- Mobile Panic Button -->
-  <button id="mobile-panic-btn" onclick="togglePanic()" title="Panic">🌐</button>
+<!-- PANIC -->
+<div id="panic-screen" class="screen">
+  <div class="google-logo"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></div>
+  <div class="google-search">
+    <div class="google-input-wrap"><input type="text" placeholder="Search Google or type a URL" /></div>
+    <div class="google-btns">
+      <button class="google-btn">Google Search</button>
+      <button class="google-btn">I'm Feeling Lucky</button>
+    </div>
+  </div>
+  <div class="panic-hint">Press ` again to return</div>
+</div>
 
-  <script>
-    // ========== STATE ==========
-    const state = {
-      account: null,
-      uiStyle: "windows",
-      wallpaper: "gradient1",
-      accent: "#3b82f6",
-      isLocked: true,
-      panicMode: false,
-      notes: ""
-    };
+<button id="mobile-panic-btn" onclick="togglePanic()">🌐</button>
 
-    const wallpapers = {
-      gradient1: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%)",
-      gradient2: "linear-gradient(135deg, #1a0533 0%, #4a1d6a 50%, #1a0533 100%)",
-      gradient3: "linear-gradient(135deg, #052e16 0%, #14532d 50%, #052e16 100%)",
-      gradient4: "linear-gradient(135deg, #450a0a 0%, #7f1d1d 50%, #450a0a 100%)",
-      gradient5: "linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%)",
-      gradient6: "linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0c4a6e 100%)",
-      solid1: "#0f172a",
-      solid2: "#1e293b"
-    };
+<script>
+const state = {
+  account: null,
+  uiStyle: "windows",
+  wallpaper: "g1",
+  accent: "#3b82f6",
+  isLocked: true,
+  panicMode: false,
+  files: [{name:"Welcome.txt", type:"file", content:"Welcome to NovaOS!\nThis is your personal file system."}],
+  calcExpr: ""
+};
 
-    const accents = [
-      "#3b82f6", "#8b5cf6", "#ec4899", "#ef4444",
-      "#f59e0b", "#22c55e", "#06b6d4", "#f97316"
-    ];
+const wallpapers = {
+  g1: "linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)",
+  g2: "linear-gradient(135deg,#1a0533 0%,#4a1d6a 50%,#1a0533 100%)",
+  g3: "linear-gradient(135deg,#052e16 0%,#14532d 50%,#052e16 100%)",
+  g4: "linear-gradient(135deg,#450a0a 0%,#7f1d1d 50%,#450a0a 100%)",
+  g5: "linear-gradient(135deg,#1e1b4b 0%,#312e81 40%,#4c1d95 100%)",
+  g6: "linear-gradient(135deg,#0c4a6e 0%,#0369a1 50%,#0c4a6e 100%)",
+  g7: "linear-gradient(135deg,#18181b 0%,#27272a 100%)",
+  g8: "linear-gradient(135deg,#0f172a 0%,#334155 100%)"
+};
+const accents = ["#3b82f6","#8b5cf6","#ec4899","#ef4444","#f59e0b","#22c55e","#06b6d4","#f97316"];
 
-    // ========== INIT ==========
-    function init() {
-      loadState();
-      applyTheme();
-      updateClocks();
-      setInterval(updateClocks, 1000);
+function init() {
+  loadState();
+  applyTheme();
+  updateClocks();
+  setInterval(updateClocks, 1000);
+  buildWallpaperGrid();
+  buildAccentPicker();
+  renderFiles();
 
-      buildWallpaperGrid();
-      buildAccentPicker();
+  // Boot then decide
+  setTimeout(() => {
+    document.getElementById("boot-screen").classList.remove("active");
+    if (!state.account) showScreen("setup");
+    else showLockScreen();
+  }, 2400);
 
-      if (!state.account) {
-        showScreen("setup");
-      } else {
-        showLockScreen();
-      }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state.account && !state.panicMode) lockNow();
+  });
 
-      document.addEventListener("visibilitychange", () => {
-        if (document.hidden && state.account && !state.panicMode) {
-          lockNow();
-        }
-      });
+  document.addEventListener("keydown", e => {
+    if (e.key === "`") { e.preventDefault(); togglePanic(); }
+    if (e.key === "Enter" && document.getElementById("lock-screen").classList.contains("active")) attemptUnlock();
+  });
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "`") {
-          e.preventDefault();
-          togglePanic();
-        }
-        if (e.key === "Enter" && document.getElementById("lock-screen").classList.contains("active")) {
-          attemptUnlock();
-        }
-      });
+  // Terminal enter
+  document.getElementById("terminal-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") runTerminalCommand();
+  });
 
-      const savedNotes = localStorage.getItem("novaos_notes");
-      if (savedNotes) {
-        state.notes = savedNotes;
-        document.getElementById("notes-area").value = savedNotes;
-      }
-    }
+  // Notes auto-save
+  document.getElementById("notes-area").addEventListener("input", e => {
+    localStorage.setItem("novaos_notes", e.target.value);
+  });
+  const savedNotes = localStorage.getItem("novaos_notes");
+  if (savedNotes) document.getElementById("notes-area").value = savedNotes;
+}
 
-    function loadState() {
-      try {
-        const raw = localStorage.getItem("novaos_account");
-        if (raw) state.account = JSON.parse(raw);
+function loadState() {
+  try {
+    const a = localStorage.getItem("novaos_account");
+    if (a) state.account = JSON.parse(a);
+    state.uiStyle = localStorage.getItem("novaos_style") || "windows";
+    state.wallpaper = localStorage.getItem("novaos_wallpaper") || "g1";
+    state.accent = localStorage.getItem("novaos_accent") || "#3b82f6";
+    const f = localStorage.getItem("novaos_files");
+    if (f) state.files = JSON.parse(f);
+  } catch(e){}
+}
 
-        state.uiStyle = localStorage.getItem("novaos_style") || "windows";
-        state.wallpaper = localStorage.getItem("novaos_wallpaper") || "gradient1";
-        state.accent = localStorage.getItem("novaos_accent") || "#3b82f6";
-      } catch (e) {
-        console.warn("Could not load state", e);
-      }
-    }
+function saveAccount() {
+  localStorage.setItem("novaos_account", JSON.stringify(state.account));
+  localStorage.setItem("novaos_style", state.uiStyle);
+  localStorage.setItem("novaos_wallpaper", state.wallpaper);
+  localStorage.setItem("novaos_accent", state.accent);
+}
 
-    function saveAccount() {
-      localStorage.setItem("novaos_account", JSON.stringify(state.account));
-      localStorage.setItem("novaos_style", state.uiStyle);
-      localStorage.setItem("novaos_wallpaper", state.wallpaper);
-      localStorage.setItem("novaos_accent", state.accent);
-    }
+function saveFiles() {
+  localStorage.setItem("novaos_files", JSON.stringify(state.files));
+}
 
-    // ========== SCREENS ==========
-    function showScreen(name) {
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      const el = document.getElementById(name + "-screen");
-      if (el) el.classList.add("active");
-    }
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(name + "-screen").classList.add("active");
+}
 
-    function showLockScreen() {
-      state.isLocked = true;
-      closeStartMenu();
-      closeAllWindows();
+function showLockScreen() {
+  state.isLocked = true;
+  closeStartMenu();
+  closeAllWindows();
+  const av = (state.account.username[0] || "U").toUpperCase();
+  document.getElementById("lock-avatar").textContent = av;
+  document.getElementById("lock-username").textContent = state.account.username;
+  document.getElementById("lock-password").value = "";
+  document.getElementById("lock-error").textContent = "";
+  applyWallpaperTo(document.getElementById("lock-screen"));
+  showScreen("lock");
+  setTimeout(() => document.getElementById("lock-password").focus(), 80);
+}
 
-      const avatar = (state.account.username[0] || "U").toUpperCase();
-      document.getElementById("lock-avatar").textContent = avatar;
-      document.getElementById("lock-username").textContent = state.account.username;
-      document.getElementById("lock-password").value = "";
-      document.getElementById("lock-error").textContent = "";
+function showDesktop() {
+  state.isLocked = false;
+  applyWallpaperTo(document.getElementById("desktop-screen"));
+  applyStyle();
+  const av = (state.account.username[0] || "U").toUpperCase();
+  document.getElementById("start-avatar").textContent = av;
+  document.getElementById("start-username").textContent = state.account.username;
+  document.getElementById("start-style-label").textContent = state.uiStyle === "linux" ? "Linux style" : "Windows style";
+  document.getElementById("start-btn").textContent = state.uiStyle === "linux" ? "●" : "⊞";
+  // highlight current style in settings
+  document.getElementById("style-win").classList.toggle("selected", state.uiStyle === "windows");
+  document.getElementById("style-lin").classList.toggle("selected", state.uiStyle === "linux");
+  showScreen("desktop");
+}
 
-      applyWallpaperTo(document.getElementById("lock-screen"));
-      showScreen("lock");
-      setTimeout(() => document.getElementById("lock-password").focus(), 100);
-    }
+let selectedStyle = "windows";
+function selectStyle(el) {
+  document.querySelectorAll(".style-option").forEach(o => o.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedStyle = el.dataset.style;
+}
 
-    function showDesktop() {
-      state.isLocked = false;
+function createAccount() {
+  const u = document.getElementById("setup-username").value.trim();
+  const p1 = document.getElementById("setup-password").value;
+  const p2 = document.getElementById("setup-password2").value;
+  const err = document.getElementById("setup-error");
+  if (!u || u.length < 2) { err.textContent = "Username too short"; return; }
+  if (!p1 || p1.length < 3) { err.textContent = "Password too short"; return; }
+  if (p1 !== p2) { err.textContent = "Passwords don't match"; return; }
+  state.account = { username: u, password: p1 };
+  state.uiStyle = selectedStyle;
+  saveAccount();
+  showDesktop();
+}
+
+function attemptUnlock() {
+  const input = document.getElementById("lock-password").value;
+  const err = document.getElementById("lock-error");
+  if (input === state.account.password) {
+    err.textContent = "";
+    showDesktop();
+  } else {
+    err.textContent = "Incorrect password";
+    document.getElementById("lock-password").value = "";
+    document.getElementById("lock-password").focus();
+  }
+}
+
+function lockNow() {
+  if (state.panicMode) return;
+  closeStartMenu();
+  showLockScreen();
+}
+
+function shutdown() {
+  closeStartMenu();
+  showLockScreen();
+}
+
+function applyStyle() {
+  document.body.classList.toggle("linux-style", state.uiStyle === "linux");
+}
+
+function applyTheme() {
+  document.documentElement.style.setProperty("--accent", state.accent);
+  document.documentElement.style.setProperty("--accent-hover", adjustColor(state.accent, -25));
+}
+
+function applyWallpaperTo(el) {
+  el.style.background = wallpapers[state.wallpaper] || wallpapers.g1;
+}
+
+function buildWallpaperGrid() {
+  const grid = document.getElementById("wallpaper-grid");
+  grid.innerHTML = "";
+  Object.keys(wallpapers).forEach(k => {
+    const d = document.createElement("div");
+    d.className = "wallpaper-option" + (state.wallpaper === k ? " active" : "");
+    d.style.background = wallpapers[k];
+    d.onclick = () => {
+      state.wallpaper = k;
+      localStorage.setItem("novaos_wallpaper", k);
       applyWallpaperTo(document.getElementById("desktop-screen"));
-      applyStyle();
+      applyWallpaperTo(document.getElementById("lock-screen"));
+      buildWallpaperGrid();
+    };
+    grid.appendChild(d);
+  });
+}
 
-      const avatar = (state.account.username[0] || "U").toUpperCase();
-      document.getElementById("start-avatar").textContent = avatar;
-      document.getElementById("start-username").textContent = state.account.username;
-      document.getElementById("start-style-label").textContent =
-        state.uiStyle === "linux" ? "Linux style" : "Windows style";
+function buildAccentPicker() {
+  const c = document.getElementById("theme-colors");
+  c.innerHTML = "";
+  accents.forEach(col => {
+    const s = document.createElement("div");
+    s.className = "color-swatch" + (state.accent === col ? " active" : "");
+    s.style.background = col;
+    s.onclick = () => {
+      state.accent = col;
+      localStorage.setItem("novaos_accent", col);
+      applyTheme();
+      buildAccentPicker();
+    };
+    c.appendChild(s);
+  });
+}
 
-      const startBtn = document.getElementById("start-btn");
-      startBtn.textContent = state.uiStyle === "linux" ? "●" : "⊞";
+function changeStyle(style) {
+  state.uiStyle = style;
+  localStorage.setItem("novaos_style", style);
+  applyStyle();
+  document.getElementById("start-btn").textContent = style === "linux" ? "●" : "⊞";
+  document.getElementById("start-style-label").textContent = style === "linux" ? "Linux style" : "Windows style";
+  document.getElementById("style-win").classList.toggle("selected", style === "windows");
+  document.getElementById("style-lin").classList.toggle("selected", style === "linux");
+}
 
-      showScreen("desktop");
-    }
+function adjustColor(hex, amt) {
+  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  r = Math.max(0,Math.min(255,r+amt)); g = Math.max(0,Math.min(255,g+amt)); b = Math.max(0,Math.min(255,b+amt));
+  return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
+}
 
-    // ========== SETUP ==========
-    let selectedStyle = "windows";
+function openApp(name) {
+  closeStartMenu();
+  closeAllWindows();
+  const w = document.getElementById("window-" + name);
+  if (w) w.classList.add("open");
+  if (name === "terminal") setTimeout(() => document.getElementById("terminal-input").focus(), 50);
+}
 
-    function selectStyle(el) {
-      document.querySelectorAll(".style-option").forEach(o => o.classList.remove("selected"));
-      el.classList.add("selected");
-      selectedStyle = el.dataset.style;
-    }
+function closeApp(name) {
+  document.getElementById("window-" + name)?.classList.remove("open");
+}
 
-    function createAccount() {
-      const username = document.getElementById("setup-username").value.trim();
-      const pass1 = document.getElementById("setup-password").value;
-      const pass2 = document.getElementById("setup-password2").value;
-      const err = document.getElementById("setup-error");
+function closeAllWindows() {
+  document.querySelectorAll(".window").forEach(w => w.classList.remove("open"));
+}
 
-      if (!username) {
-        err.textContent = "Please enter a username";
-        return;
+function toggleStartMenu() {
+  document.getElementById("start-menu").classList.toggle("open");
+}
+function closeStartMenu() {
+  document.getElementById("start-menu").classList.remove("open");
+}
+
+document.addEventListener("click", e => {
+  const menu = document.getElementById("start-menu");
+  const btn = document.getElementById("start-btn");
+  if (menu.classList.contains("open") && !menu.contains(e.target) && !btn.contains(e.target)) closeStartMenu();
+});
+
+function changePassword() {
+  const cur = document.getElementById("change-current").value;
+  const next = document.getElementById("change-new").value;
+  const conf = document.getElementById("change-confirm").value;
+  const err = document.getElementById("change-error");
+  if (cur !== state.account.password) { err.textContent = "Wrong current password"; return; }
+  if (!next || next.length < 3) { err.textContent = "New password too short"; return; }
+  if (next !== conf) { err.textContent = "Passwords don't match"; return; }
+  state.account.password = next;
+  saveAccount();
+  err.style.color = "var(--success)";
+  err.textContent = "Password updated";
+  document.getElementById("change-current").value = "";
+  document.getElementById("change-new").value = "";
+  document.getElementById("change-confirm").value = "";
+  setTimeout(() => { err.textContent = ""; err.style.color = "var(--danger)"; }, 2200);
+}
+
+// FILES
+function renderFiles() {
+  const list = document.getElementById("file-list");
+  list.innerHTML = "";
+  if (state.files.length === 0) {
+    list.innerHTML = "<div style='color:var(--muted);padding:12px'>No files yet</div>";
+    return;
+  }
+  state.files.forEach((f, i) => {
+    const div = document.createElement("div");
+    div.className = "file-item";
+    div.innerHTML = `<span>${f.type === "folder" ? "📁" : "📄"}</span><span style="flex:1">${f.name}</span><span style="font-size:0.75rem;color:var(--muted)">${f.type}</span>`;
+    div.onclick = () => {
+      if (f.type === "file") {
+        openApp("notes");
+        document.getElementById("notes-area").value = f.content || "";
       }
-      if (username.length < 2) {
-        err.textContent = "Username must be at least 2 characters";
-        return;
-      }
-      if (!pass1) {
-        err.textContent = "Please enter a password";
-        return;
-      }
-      if (pass1.length < 3) {
-        err.textContent = "Password must be at least 3 characters";
-        return;
-      }
-      if (pass1 !== pass2) {
-        err.textContent = "Passwords do not match";
-        return;
-      }
+    };
+    list.appendChild(div);
+  });
+}
 
-      state.account = {
-        username: username,
-        password: pass1
-      };
-      state.uiStyle = selectedStyle;
-      saveAccount();
-      showDesktop();
-    }
+function createFile(isFolder) {
+  const name = document.getElementById("new-file-name").value.trim();
+  if (!name) return;
+  state.files.push({
+    name: name,
+    type: isFolder ? "folder" : "file",
+    content: isFolder ? null : ""
+  });
+  saveFiles();
+  document.getElementById("new-file-name").value = "";
+  renderFiles();
+}
 
-    // ========== LOCK / UNLOCK ==========
-    function attemptUnlock() {
-      const input = document.getElementById("lock-password").value;
-      const err = document.getElementById("lock-error");
+// TERMINAL
+function runTerminalCommand() {
+  const input = document.getElementById("terminal-input");
+  const cmd = input.value.trim();
+  const body = document.getElementById("terminal-body");
+  if (!cmd) return;
 
-      if (input === state.account.password) {
-        err.textContent = "";
-        showDesktop();
-      } else {
-        err.textContent = "Incorrect password";
-        document.getElementById("lock-password").value = "";
-        document.getElementById("lock-password").focus();
-      }
-    }
+  body.innerHTML += `<div><span class="prompt">user@novaos:~$</span> ${cmd}</div>`;
 
-    function lockNow() {
-      if (state.panicMode) return;
-      closeStartMenu();
-      showLockScreen();
-    }
+  const parts = cmd.split(" ");
+  const base = parts[0].toLowerCase();
+  let out = "";
 
-    function shutdown() {
-      closeStartMenu();
-      showLockScreen();
-    }
+  if (base === "help") {
+    out = `Available commands:
+  help      - show this
+  clear     - clear terminal
+  date      - show date/time
+  whoami    - show username
+  neofetch  - system info
+  echo      - print text
+  ls        - list files
+  uname     - show OS name`;
+  } else if (base === "clear") {
+    body.innerHTML = "";
+    input.value = "";
+    return;
+  } else if (base === "date") {
+    out = new Date().toString();
+  } else if (base === "whoami") {
+    out = state.account ? state.account.username : "guest";
+  } else if (base === "neofetch") {
+    out = `
+NovaOS
+------------
+OS: NovaOS 0.2 (Browser)
+Style: ${state.uiStyle}
+User: ${state.account ? state.account.username : "none"}
+Shell: nova-sh
+Resolution: ${window.innerWidth}x${window.innerHeight}`;
+  } else if (base === "echo") {
+    out = parts.slice(1).join(" ") || "";
+  } else if (base === "ls") {
+    out = state.files.map(f => (f.type === "folder" ? "📁 " : "📄 ") + f.name).join("\n") || "(empty)";
+  } else if (base === "uname") {
+    out = "NovaOS";
+  } else {
+    out = `Command not found: ${base}`;
+  }
 
-    // ========== STYLE & THEME ==========
-    function applyStyle() {
-      document.body.classList.toggle("linux-style", state.uiStyle === "linux");
-    }
+  body.innerHTML += `<div style="white-space:pre-wrap;color:#94a3b8;margin:2px 0 8px">${out}</div>`;
+  body.scrollTop = body.scrollHeight;
+  input.value = "";
+}
 
-    function applyTheme() {
-      document.documentElement.style.setProperty("--accent", state.accent);
-      document.documentElement.style.setProperty("--accent-hover", adjustColor(state.accent, -20));
-    }
+// CALCULATOR
+function calcInput(val) {
+  if (state.calcExpr === "0" && val !== ".") state.calcExpr = "";
+  state.calcExpr += val;
+  document.getElementById("calc-display").textContent = state.calcExpr;
+}
+function calcClear() {
+  state.calcExpr = "";
+  document.getElementById("calc-display").textContent = "0";
+}
+function calcEquals() {
+  try {
+    // basic safe eval
+    const result = Function('"use strict"; return (' + state.calcExpr.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-") + ")")();
+    state.calcExpr = String(result);
+    document.getElementById("calc-display").textContent = state.calcExpr;
+  } catch {
+    document.getElementById("calc-display").textContent = "Error";
+    state.calcExpr = "";
+  }
+}
 
-    function applyWallpaperTo(el) {
-      const bg = wallpapers[state.wallpaper] || wallpapers.gradient1;
-      el.style.background = bg;
-      el.style.backgroundSize = "cover";
-    }
+// PANIC
+function togglePanic() {
+  state.panicMode = !state.panicMode;
+  if (state.panicMode) showScreen("panic");
+  else {
+    if (state.isLocked || !state.account) {
+      if (!state.account) showScreen("setup");
+      else showLockScreen();
+    } else showDesktop();
+  }
+}
 
-    function buildWallpaperGrid() {
-      const grid = document.getElementById("wallpaper-grid");
-      grid.innerHTML = "";
-      Object.keys(wallpapers).forEach(key => {
-        const div = document.createElement("div");
-        div.className = "wallpaper-option" + (state.wallpaper === key ? " active" : "");
-        div.style.background = wallpapers[key];
-        div.onclick = () => {
-          state.wallpaper = key;
-          localStorage.setItem("novaos_wallpaper", key);
-          applyWallpaperTo(document.getElementById("desktop-screen"));
-          applyWallpaperTo(document.getElementById("lock-screen"));
-          buildWallpaperGrid();
-        };
-        grid.appendChild(div);
-      });
-    }
+// CLOCKS
+function updateClocks() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2,"0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  document.getElementById("lock-time").textContent = `${h}:${m}`;
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById("lock-date").textContent = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById("taskbar-time").textContent = `${h}:${m} ${ampm}`;
+  document.getElementById("taskbar-date").textContent = `${days[now.getDay()].slice(0,3)} ${now.getMonth()+1}/${now.getDate()}`;
+}
 
-    function buildAccentPicker() {
-      const container = document.getElementById("theme-colors");
-      container.innerHTML = "";
-      accents.forEach(color => {
-        const swatch = document.createElement("div");
-        swatch.className = "color-swatch" + (state.accent === color ? " active" : "");
-        swatch.style.background = color;
-        swatch.onclick = () => {
-          state.accent = color;
-          localStorage.setItem("novaos_accent", color);
-          applyTheme();
-          buildAccentPicker();
-        };
-        container.appendChild(swatch);
-      });
-    }
-
-    function adjustColor(hex, amount) {
-      let r = parseInt(hex.slice(1,3), 16);
-      let g = parseInt(hex.slice(3,5), 16);
-      let b = parseInt(hex.slice(5,7), 16);
-      r = Math.max(0, Math.min(255, r + amount));
-      g = Math.max(0, Math.min(255, g + amount));
-      b = Math.max(0, Math.min(255, b + amount));
-      return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
-    }
-
-    // ========== APPS ==========
-    function openApp(name) {
-      closeStartMenu();
-      closeAllWindows();
-      const win = document.getElementById("window-" + name);
-      if (win) win.classList.add("open");
-    }
-
-    function closeApp(name) {
-      const win = document.getElementById("window-" + name);
-      if (win) win.classList.remove("open");
-    }
-
-    function closeAllWindows() {
-      document.querySelectorAll(".window").forEach(w => w.classList.remove("open"));
-    }
-
-    function toggleStartMenu() {
-      document.getElementById("start-menu").classList.toggle("open");
-    }
-
-    function closeStartMenu() {
-      document.getElementById("start-menu").classList.remove("open");
-    }
-
-    document.addEventListener("click", (e) => {
-      const menu = document.getElementById("start-menu");
-      const btn = document.getElementById("start-btn");
-      if (menu.classList.contains("open") && !menu.contains(e.target) && !btn.contains(e.target)) {
-        closeStartMenu();
-      }
-    });
-
-    // ========== PASSWORD CHANGE ==========
-    function changePassword() {
-      const current = document.getElementById("change-current").value;
-      const next = document.getElementById("change-new").value;
-      const confirm = document.getElementById("change-confirm").value;
-      const err = document.getElementById("change-error");
-
-      if (current !== state.account.password) {
-        err.textContent = "Current password is incorrect";
-        return;
-      }
-      if (!next || next.length < 3) {
-        err.textContent = "New password must be at least 3 characters";
-        return;
-      }
-      if (next !== confirm) {
-        err.textContent = "New passwords do not match";
-        return;
-      }
-
-      state.account.password = next;
-      saveAccount();
-      err.style.color = "var(--success)";
-      err.textContent = "Password updated successfully";
-      document.getElementById("change-current").value = "";
-      document.getElementById("change-new").value = "";
-      document.getElementById("change-confirm").value = "";
-
-      setTimeout(() => {
-        err.textContent = "";
-        err.style.color = "var(--danger)";
-      }, 2500);
-    }
-
-    // ========== NOTES ==========
-    function saveNotes() {
-      state.notes = document.getElementById("notes-area").value;
-      localStorage.setItem("novaos_notes", state.notes);
-      alert("Notes saved!");
-    }
-
-    // ========== PANIC ==========
-    function togglePanic() {
-      state.panicMode = !state.panicMode;
-      if (state.panicMode) {
-        showScreen("panic");
-      } else {
-        if (state.isLocked || !state.account) {
-          if (!state.account) showScreen("setup");
-          else showLockScreen();
-        } else {
-          showDesktop();
-        }
-      }
-    }
-
-    // ========== CLOCKS ==========
-    function updateClocks() {
-      const now = new Date();
-
-      let hours = now.getHours();
-      const mins = now.getMinutes().toString().padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      document.getElementById("lock-time").textContent = `${hours}:${mins}`;
-
-      const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-      document.getElementById("lock-date").textContent =
-        `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
-
-      document.getElementById("taskbar-time").textContent = `${hours}:${mins} ${ampm}`;
-      document.getElementById("taskbar-date").textContent =
-        `${days[now.getDay()].slice(0,3)} ${(now.getMonth()+1)}/${now.getDate()}`;
-    }
-
-    // ========== START ==========
-    init();
-  </script>
+init();
+</script>
 </body>
 </html>
